@@ -4,16 +4,18 @@
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
     </head>
     <body>
+         <audio id="gameOverSound" src="gameOver.wav" preload="auto"></audio>
+        <audio id="eat" src="eat.wav" preload="auto"></audio>      
+
         <center>
-        <img src="snake.png" width="120">
+        <img src="snake.png" width="100">
         <br>
 
         <canvas id="screen" width="420" height="420"></canvas>
         <br>
-        <textarea id="display" style="width:500px;height:100px" disabled></textarea>
+        <textarea id="display" style="width:420px;height:50px" disabled></textarea>
         </center>
-        <audio id="gameOverSound" src="gameOver.wav" preload="auto"></audio>
-        <audio id="eat" src="eat.wav" preload="auto"></audio>
+
 
         <script>
             
@@ -119,7 +121,7 @@
                     userName='No Name';
                 }
                 alert(userName+", your score: "+score);
-                gameResult={player: userName, score: score};
+                gameResult={Player: userName, Score: score};
                 highscoreList.push(gameResult);
 
                 highscoreList.sort(function(a,b) { return (b.score - a.score ) })
