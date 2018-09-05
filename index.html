@@ -1,0 +1,278 @@
+<html>
+    <head>
+        <title>snake</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    </head>
+    <body>
+        <center>
+        <img src="snake.png" width="120">
+        <br>
+
+        <canvas id="screen" width="420" height="420"></canvas>
+        <br>
+        <textarea id="display" style="width:500px;height:100px" disabled></textarea>
+        </center>
+        <audio id="gameOverSound" src="gameOver.wav" preload="auto"></audio>
+        <audio id="eat" src="eat.wav" preload="auto"></audio>
+
+        <script>
+            
+            const canvas=document.getElementById("screen");
+            const ctx=canvas.getContext('2d');
+            
+            const cellSize=20;
+            const gameWidth=canvas.width/cellSize;
+            const gameHeight=canvas.height/cellSize;
+
+            let trail=[];
+            const centerX=Math.floor(gameWidth/2);
+            const centerY=Math.floor(gameHeight/2);
+
+            trail.push({x:centerX ,y:centerY});
+            
+            //Velocities
+            let vx=0;
+            let vy=0;
+            
+            //Fruit
+            let fruit = generateFruit();
+
+            //Score
+            let score=0;
+            let userName="no name"
+            let highscoreList = [];
+            let gameResult = {};
+
+            let parsed = "";
+            
+            //Draw
+            function drawSnake(){
+                //ctx.fillStyle="rgb(0,200,0)";
+                ctx.fillStyle="rgb(0,128,0)";
+                ctx.strokeStyle="rgb(0,0,0)";
+
+                for(let i=0; i<trail.length;i++){
+                    ctx.fillRect(trail[i].x*cellSize,trail[i].y*cellSize,cellSize,cellSize);
+
+                    ctx.strokeRect(trail[i].x*cellSize,trail[i].y*cellSize,cellSize,cellSize);
+
+                }
+            }
+
+            function drawFruit(){
+                //ctx.fillStyle="rgb(200,0,0)";
+                //ctx.fillStyle="rgb(255,69,0)";
+
+                let imageObj = new Image();
+                imageObj.src = 'Apple.png';
+                imageObj.onload = function() {
+                  ctx.drawImage(imageObj, fruit.x*cellSize,fruit.y*cellSize,cellSize,cellSize);
+                };
+
+                
+                ctx.fillRect(fruit.x*cellSize,fruit.y*cellSize,cellSize,cellSize);
+            }
+
+
+            function clearCanvas(){
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+            }
+            function drawBackground(){
+                //ctx.fillStyle="rgb(0,0,0)";
+                ctx.fillStyle="rgb(135,206,250)";
+                //let imageObj = new Image();
+                //imageObj.src = 'background.jpg';
+                //ctx.fillStyle=ctx.createPattern(imageObj,'no-repeat');
+                
+
+
+
+                ctx.fillRect(0,0,canvas.width,canvas.height);
+            }
+            
+            function drawScore(){
+                ctx.fillStyle="rgb(255,255,255)";
+                ctx.font="20px Ariel";
+                ctx.fillText(score,5,20);
+            }
+            //Update
+            function gameOver()
+            {
+                document.getElementById('gameOverSound').play();
+
+                updateHighscoreList();
+                
+                
+
+                trail=[{x:centerX,y:centerY}];
+                vx=0;
+                vy=0;     
+                fruit=generateFruit();         
+                score=0;  
+                
+            }
+
+            function updateHighscoreList(){
+                userName=prompt('GAME OVER! Please enter your name:');
+                if(userName===null||userName==="")
+                {
+                    userName='No Name';
+                }
+                alert(userName+", your score: "+score);
+                gameResult={player: userName, score: score};
+                highscoreList.push(gameResult);
+
+                highscoreList.sort(function(a,b) { return (b.score - a.score ) })
+                printHighScoreTable();
+
+            }
+
+            function printHighScoreTable(){
+            parsed="";
+            
+                for (i = 0; i< highscoreList.length; i++) {
+                    parsed+=i+1+". ";
+                    let myobj=  highscoreList[i];
+                    for (let property in myobj) {
+                        parsed += property + ": " + myobj[property]+" ";          
+                    }
+                    parsed+="\n";
+                }                           
+                $("#display").val(parsed);
+            }
+            
+            function handleColleision(){
+
+                for (let i = 1; i < trail.length; i++) {
+                    if(trail[0].x===trail[i].x&&trail[0].y===trail[i].y)
+                    {
+                        gameOver();
+                    }
+
+                    
+                }
+                //Collision with fruit
+                if(trail[0].x===fruit.x&&trail[0].y===fruit.y){
+                    document.getElementById('eat').play();
+
+                    score++;
+                    let lastCell=trail[trail.length-1];
+                    let beforeLastCell=trail[trail.length-2];
+
+                    let newCellX=lastCell.x-vx;
+                    let newCellY=lastCell.y-vy;
+
+                    if(beforeLastCell){
+                        newCellX=lastCell.x+(lastCell.x-beforeLastCell.x);
+                        newCellY=lastCell.y+(lastCell.y-beforeLastCell.y);
+
+                    }
+
+                    trail.push({
+                        x:newCellX,
+                        y:newCellY
+                    });
+
+                    fruit=generateFruit();
+                }
+            }
+
+            function updateSnakePosition(){
+
+                for(let i=trail.length-1;i>0;i--){
+                    trail[i]={
+                        x:trail[i-1].x,
+                        y:trail[i-1].y
+                    };
+                }
+
+                if(vx===1){
+                    trail[0].x++;
+                    trail[0].x=(trail[0].x+gameWidth)%gameWidth;
+                }
+                if(vx===-1){
+                    trail[0].x--;
+                    trail[0].x=(trail[0].x+gameWidth)%gameWidth;
+
+                }
+
+                if(vy===1){
+                    trail[0].y++;
+                    trail[0].y=(trail[0].y+gameHeight)%gameHeight;
+
+                }
+                if(vy===-1){
+                    trail[0].y--;
+                    trail[0].y=(trail[0].y+gameHeight)%gameHeight;
+
+                }
+            }
+
+            //Input
+            function handleKeyUp(event){
+                if(event.code==="ArrowUp"){
+                    if(vy===1){
+                        return;
+                    }
+
+                    vx=0;
+                    vy=-1;
+                }
+                if(event.code==="ArrowDown"){
+                    if(vy===-1){
+                        return;
+                    }
+
+                    vx=0;
+                    vy=1;
+                }
+                if(event.code==="ArrowRight"){
+                    if(vx===-1){
+                        return;
+                    }
+
+                    vx=1;
+                    vy=0;
+                }
+                if(event.code==="ArrowLeft"){
+                    if(vx===1){
+                        return;
+                    }
+
+                    vx=-1;
+                    vy=0;
+                }
+            }
+            document.addEventListener('keyup',handleKeyUp);
+
+            //Helpers
+            function generateFruit(){
+                const fruitX=Math.floor(Math.random()*gameWidth);
+                const fruitY=Math.floor(Math.random()*gameHeight);
+
+                return {x:fruitX,y:fruitY};
+            }
+            
+
+            //Game Loop
+            function draw(){
+                clearCanvas();
+                drawBackground();
+                drawFruit();
+                drawScore();
+                drawSnake();
+            }
+            function update(){
+                handleColleision();
+                updateSnakePosition();
+            }
+            function mainLoop(){
+                update();
+                draw();
+            }
+            setInterval(mainLoop,1/10 * 1000);
+        </script>
+
+
+    </body>
+</html>
